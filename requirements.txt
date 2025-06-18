@@ -12,3 +12,4 @@ matplotlib
 scipy
 geopy
 psutil
+dash_auth
