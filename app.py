@@ -971,6 +971,6 @@ def display_displacement(clickData, start_date, end_date, y_min, y_max, selected
     return fig, {'display': 'block'}, attributes_data, {'display': 'block'}
 
 if __name__ == '__main__':
-    app.run_server(port=8060, debug=True)
+    app.run(port=8060, debug=True)
 
      
