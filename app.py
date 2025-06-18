@@ -89,12 +89,6 @@ mean_velocity_data_otm_ml = all_data_otm_ml.groupby('pid')['displacement_speed']
 mean_velocity_data_otm_ml.rename(columns={'displacement_speed': 'mean_velocity'}, inplace=True)
 all_data_otm_ml = pd.merge(all_data_otm_ml, mean_velocity_data_otm_ml, on='pid', how='left')
 
-anomaly_data_otm_95_ml = load_anomaly_data('D:\\sar_time_series-fix_inference\\OTM\\ML\\anomaly_otm_ml_95.csv', 'Anomaly Set 2 ML (95%)')
-anomaly_data_otm_95_ml = anomaly_data_otm_95_ml.groupby('pid').head(60)
-
-anomaly_data_otm_99_ml = load_anomaly_data('D:\\sar_time_series-fix_inference\\OTM\\ML\\anomaly_otm_ml_99.csv', 'Anomaly Set 2 ML (99%)')
-anomaly_data_otm_99_ml = anomaly_data_otm_99_ml.groupby('pid').head(60)
-
 def compute_prefix_sums(data):
     data = data.sort_values(by=['pid', 'step'])
     pivot = data.pivot(index='pid', columns='step', values='predicted_displacement').apply(pd.to_numeric, errors='coerce').fillna(0).round(1)
