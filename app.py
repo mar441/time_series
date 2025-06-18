@@ -14,9 +14,6 @@ from dash import dash_table
 import plotly.graph_objects as go  
 import plotly.io as pio
 import dash_auth
-import kaleido
-import os
-import psutil
 
 def load_displacement_data(file_path, file_label):
     df = pd.read_csv(file_path)
