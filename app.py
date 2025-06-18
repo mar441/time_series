@@ -32,44 +32,24 @@ def load_anomaly_data(file_path, file_label):
     df['pid'] = df['pid'].astype(str)
     return df
 
-
 geo_data_nysa_ml = pd.read_csv('nysa_geo.csv', delimiter=',')
 geo_data_nysa_ml['pid'] = geo_data_nysa_ml['pid'].astype(str).str.strip()
-
-geo_data_otm_ml = pd.read_csv('otm_geo.csv', delimiter=',')
-geo_data_otm_ml['pid'] = geo_data_otm_ml['pid'].astype(str).str.strip()
 
 displacement_data_nysa_ml = load_displacement_data('final_nysa.csv', 
                                                       'Descending 22')
 displacement_data_nysa_ml['pid'] = displacement_data_nysa_ml['pid'].astype(str).str.strip() 
 all_data_nysa_ml = pd.merge(displacement_data_nysa_ml, geo_data_nysa_ml, on='pid', how='left')
 
-displacement_data_otm_ml = load_displacement_data('final_otm.csv', 
-                                                      'Descending 22')
-displacement_data_otm_ml['pid'] = displacement_data_otm_ml['pid'].astype(str).str.strip() 
-all_data_otm_ml = pd.merge(displacement_data_otm_ml, geo_data_otm_ml, on='pid', how='left')
-
 prediction_data_nysa_ml = pd.read_csv('predictions_nysa_ml.csv', delimiter=',')
 prediction_data_nysa_ml = prediction_data_nysa_ml.melt(var_name='pid', value_name='predicted_displacement')
 prediction_data_nysa_ml['label'] = 'ML Nysa Prediction Set'
 prediction_data_nysa_ml['step'] = prediction_data_nysa_ml.groupby('pid').cumcount()
-
-prediction_data_otm_ml = pd.read_csv('predictions_otm_ml.csv', delimiter=',')
-prediction_data_otm_ml = prediction_data_otm_ml.melt(var_name='pid', value_name='predicted_displacement')
-prediction_data_otm_ml['label'] = 'ML OTM Prediction Set'
-prediction_data_otm_ml['step'] = prediction_data_otm_ml.groupby('pid').cumcount()
 
 anomaly_data_nysa_95_ml = load_anomaly_data('anomaly_nysa_ml_95.csv', 'Anomaly Set 1 ML (95%)')
 anomaly_data_nysa_95_ml = anomaly_data_nysa_95_ml.groupby('pid').head(60)
 
 anomaly_data_nysa_99_ml = load_anomaly_data('anomaly_nysa_ml_99.csv', 'Anomaly Set 1 ML (99%)')
 anomaly_data_nysa_99_ml = anomaly_data_nysa_99_ml.groupby('pid').head(60)
-
-anomaly_data_otm_95_ml = load_anomaly_data('anomaly_otm_ml_95.csv', 'Anomaly Set 1 ML (95%)')
-anomaly_data_otm_95_ml = anomaly_data_nysa_95_ml.groupby('pid').head(60)
-
-anomaly_data_otm_99_ml = load_anomaly_data('anomaly_otm_ml_99.csv', 'Anomaly Set 1 ML (99%)')
-anomaly_data_otm_99_ml = anomaly_data_nysa_99_ml.groupby('pid').head(60)
 
 all_data_nysa_ml.sort_values(by=['pid', 'timestamp'], inplace=True)
 all_data_nysa_ml['displacement_diff'] = all_data_nysa_ml.groupby('pid')['displacement'].diff().round(1)
@@ -80,15 +60,6 @@ mean_velocity_data_nysa_ml = all_data_nysa_ml.groupby('pid')['displacement_speed
 mean_velocity_data_nysa_ml.rename(columns={'displacement_speed': 'mean_velocity'}, inplace=True)
 all_data_nysa_ml = pd.merge(all_data_nysa_ml, mean_velocity_data_nysa_ml, on='pid', how='left')
 
-all_data_otm_ml.sort_values(by=['pid', 'timestamp'], inplace=True)
-all_data_otm_ml['displacement_diff'] = all_data_otm_ml.groupby('pid')['displacement'].diff().round(1)
-all_data_otm_ml['time_diff'] = all_data_otm_ml.groupby('pid')['timestamp'].diff().dt.days.round(1)
-all_data_otm_ml['displacement_speed'] = ((all_data_otm_ml['displacement_diff'] / all_data_otm_ml['time_diff']) * 365).round(1)
-
-mean_velocity_data_otm_ml = all_data_otm_ml.groupby('pid')['displacement_speed'].mean().round(1).reset_index()
-mean_velocity_data_otm_ml.rename(columns={'displacement_speed': 'mean_velocity'}, inplace=True)
-all_data_otm_ml = pd.merge(all_data_otm_ml, mean_velocity_data_otm_ml, on='pid', how='left')
-
 def compute_prefix_sums(data):
     data = data.sort_values(by=['pid', 'step'])
     pivot = data.pivot(index='pid', columns='step', values='predicted_displacement').apply(pd.to_numeric, errors='coerce').fillna(0).round(1)
@@ -98,17 +69,13 @@ def compute_prefix_sums(data):
         pivot[col] = (pivot[col] + pivot[col-1]).round(1)
     return pivot
 
-
 nysa_ml_prefix = compute_prefix_sums(prediction_data_nysa_ml)
-otm_ml_prefix = compute_prefix_sums(prediction_data_otm_ml)
 
 prefix_data = {
     ('nysa', 'ml'): nysa_ml_prefix,
-    ('otmuchow', 'ml'): otm_ml_prefix,
 }
 
 MAX_NYSA = nysa_ml_prefix.columns.max()
-MAX_OTMUCHOW = otm_ml_prefix.columns.max()
 
 def add_obs_step(df):
     df = df.sort_values(by=['pid', 'timestamp'])
@@ -116,7 +83,6 @@ def add_obs_step(df):
     return df
 
 all_data_nysa_ml = add_obs_step(all_data_nysa_ml)
-all_data_otm_ml = add_obs_step(all_data_otm_ml)
 
 def compute_prefix_sums_actual(df):
     pivot = df.pivot(index='pid', columns='obs_step', values='displacement').fillna(0).round(1)
@@ -127,15 +93,12 @@ def compute_prefix_sums_actual(df):
     return pivot
 
 actual_nysa_ml_prefix = compute_prefix_sums_actual(all_data_nysa_ml)
-actual_otm_ml_prefix = compute_prefix_sums_actual(all_data_otm_ml)
 
 actual_prefix_data = {
     'nysa': actual_nysa_ml_prefix,
-    'otmuchow': actual_otm_ml_prefix,
 }
 
 MAX_ACTUAL_NYSA = actual_nysa_ml_prefix.columns.max()
-MAX_ACTUAL_OTMUCHOW = actual_otm_ml_prefix.columns.max()
 
 orbit_geometry_info = {
     'Descending 22': {
@@ -318,9 +281,8 @@ app.layout = html.Div([
                 id='area-dropdown',
                 options=[
                     {'label': 'Zbiornik Nysa', 'value': 'nysa'},
-                    {'label': 'Zbiornik Otmuchów', 'value': 'otmuchow'},
                 ],
-                value='otmuchow',
+                value='nysa',
                 clearable=False,
                 persistence=True,
                 persistence_type='memory',
@@ -439,6 +401,7 @@ app.layout = html.Div([
     ], style={'padding': '10px'}),
 ])
 
+
 @app.callback(
     Output('color-range-dropdown-container', 'style'),
     Input('color-mode-dropdown', 'value')
@@ -502,7 +465,6 @@ def display_selected_dates(range_value, selected_area):
 
     data_for_area = {
         'nysa': all_data_nysa_ml,
-        'otmuchow': all_data_otm_ml,
     }.get(selected_area, all_data_nysa_ml)
 
     timestamps_df = (
@@ -543,9 +505,7 @@ def toggle_prediction_slider_visibility(color_mode):
     Input('area-dropdown', 'value')
 )
 def toggle_prediction_method_dropdown(selected_area):
-    if selected_area == 'otmuchow':
-        return {'display': 'block', 'padding': '10px'}
-    elif selected_area == 'nysa':
+    if selected_area == 'nysa':
         return {'display': 'block', 'padding': '10px'}
     else:
         return {'display': 'none'}
@@ -558,8 +518,6 @@ def toggle_prediction_method_dropdown(selected_area):
 )
 def update_orbit_filter(selected_area):
     if selected_area == 'nysa':
-        return [{'label': 'Descending 22', 'value': 'Descending 22'}], 'Ascending 22', True
-    elif selected_area == 'otmuchow':
         return [{'label': 'Descending 22', 'value': 'Descending 22'}], 'Ascending 22', True
 
 @app.callback(
@@ -575,14 +533,12 @@ def update_slider_max(selected_area, color_mode, prediction_method):
     if color_mode == 'actual_displacement_velocity':
         max_val = {
             'nysa': MAX_ACTUAL_NYSA,
-            'otmuchow': MAX_ACTUAL_OTMUCHOW,
         }.get(selected_area, MAX_ACTUAL_NYSA)
     else:
         max_val = 60  
         
     data_for_area = {
         'nysa': all_data_nysa_ml,
-        'otmuchow': all_data_otm_ml,
     }.get(selected_area, all_data_nysa_ml)
 
     timestamps_df = data_for_area.drop_duplicates(subset='obs_step')[['obs_step', 'timestamp']].sort_values('obs_step')
@@ -625,13 +581,7 @@ def update_slider_max(selected_area, color_mode, prediction_method):
 )
 def update_map(map_style,color_mode,orbit_filter,selected_area,pred_range,prediction_method,point_opacity,point_size,
                color_scale_selected,range_choice,custom_min,custom_max):
-    
-    if selected_area == 'otmuchow':
-        data = all_data_otm_ml.drop_duplicates(subset=['pid'])
-        center_coords = {'lat': data['latitude'].mean(), 'lon': data['longitude'].mean()}
-        zoom_level = 12
-        orbit_filter = ['Descending 22']
-    elif selected_area == 'nysa':
+    if selected_area == 'nysa':
         data = all_data_nysa_ml.drop_duplicates(subset=['pid'])
         center_coords = {'lat': data['latitude'].mean(), 'lon': data['longitude'].mean()}
         zoom_level = 12
@@ -648,12 +598,10 @@ def update_map(map_style,color_mode,orbit_filter,selected_area,pred_range,predic
     continuous_modes = ['speed', 'prediction_velocity', 'actual_displacement_velocity']
 
     if color_mode == 'prediction_velocity':
-        if selected_area == 'otmuchow':
-            max_steps = MAX_OTMUCHOW
-        elif selected_area == 'nysa':
+        if selected_area == 'nysa':
             max_steps = MAX_NYSA
 
-        pred_key = (selected_area, prediction_method if selected_area in ['nysa', 'raciborz', 'otmuchow'] else 'ml')
+        pred_key = (selected_area, prediction_method if selected_area in ['nysa'] else 'ml')
         prefix_pivot = prefix_data[pred_key]
 
         end_val = min(end_val, max_steps)
@@ -696,9 +644,6 @@ def update_map(map_style,color_mode,orbit_filter,selected_area,pred_range,predic
         if selected_area == 'nysa':
             max_steps = MAX_ACTUAL_NYSA
             prefix_pivot = actual_prefix_data['nysa']
-        elif selected_area == 'otmuchow':
-            max_steps = MAX_ACTUAL_OTMUCHOW
-            prefix_pivot = actual_prefix_data['otmuchow']
 
         end_val = min(end_val, max_steps)
         start_val = min(start_val, max_steps)
@@ -737,9 +682,7 @@ def update_map(map_style,color_mode,orbit_filter,selected_area,pred_range,predic
         fig.update_layout(legend_title_text='Actual Displacement Velocity Average')
 
     elif color_mode == 'anomaly_type':
-        if selected_area == 'otmuchow':
-            merged_data = filtered_data.merge(anomaly_data_otm_99_ml[['pid','is_anomaly']], on='pid', how='left')
-        elif selected_area == 'nysa':
+        if selected_area == 'nysa':
             merged_data = filtered_data.merge(anomaly_data_nysa_99_ml[['pid','is_anomaly']], on='pid', how='left')
 
         merged_data['is_anomaly'] = merged_data['is_anomaly'].fillna(False).astype(bool)
@@ -892,10 +835,7 @@ def display_distance(selected_points, distance_calc_enabled):
     [Input('area-dropdown', 'value')]
 )
 def update_date_picker(selected_area):
-    if selected_area == 'otmuchow':
-        start_date = all_data_otm_ml['timestamp'].min()
-        end_date = all_data_otm_ml['timestamp'].max()
-    elif selected_area == 'nysa':
+    if selected_area == 'nysa':
         start_date = all_data_nysa_ml['timestamp'].min()
         end_date = all_data_nysa_ml['timestamp'].max()
 
@@ -922,13 +862,7 @@ def display_displacement(clickData, start_date, end_date, y_min, y_max, selected
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
     
-    if selected_area == 'otmuchow':
-        if prediction_method == 'ml':
-            full_data = all_data_otm_ml[all_data_otm_ml['pid'] == point_id].copy()
-            anomaly_data_95 = anomaly_data_otm_95_ml
-            anomaly_data_99 = anomaly_data_otm_99_ml
-            last_n_data = full_data.tail(60)
-    elif selected_area == 'nysa':
+    if selected_area == 'nysa':
         if prediction_method == 'ml':
             full_data = all_data_nysa_ml[all_data_nysa_ml['pid'] == point_id].copy()
             anomaly_data_95 = anomaly_data_nysa_95_ml
@@ -1038,3 +972,5 @@ def display_displacement(clickData, start_date, end_date, y_min, y_max, selected
 
 if __name__ == '__main__':
     app.run_server(port=8060, debug=True)
+
+     
