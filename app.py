@@ -32,63 +32,32 @@ def load_anomaly_data(file_path, file_label):
     df['pid'] = df['pid'].astype(str)
     return df
 
-geo_data_nysa_dense = pd.read_csv('nysa_geo.csv', delimiter=',')
-geo_data_nysa_dense['pid'] = geo_data_nysa_dense['pid'].astype(str).str.strip()
 
 geo_data_nysa_ml = pd.read_csv('nysa_geo.csv', delimiter=',')
 geo_data_nysa_ml['pid'] = geo_data_nysa_ml['pid'].astype(str).str.strip()
 
-geo_data_otm_dense = pd.read_csv('otm_geo.csv', delimiter=',')
-geo_data_otm_dense['pid'] = geo_data_otm_dense['pid'].astype(str).str.strip()
-
 geo_data_otm_ml = pd.read_csv('otm_geo.csv', delimiter=',')
 geo_data_otm_ml['pid'] = geo_data_otm_ml['pid'].astype(str).str.strip()
-
-displacement_data_nysa_dense = load_displacement_data('final_nysa.csv', 
-                                                      'Descending 22')
-displacement_data_nysa_dense['pid'] = displacement_data_nysa_dense['pid'].astype(str).str.strip() 
-all_data_nysa_dense = pd.merge(displacement_data_nysa_dense, geo_data_nysa_dense, on='pid', how='left')
 
 displacement_data_nysa_ml = load_displacement_data('final_nysa.csv', 
                                                       'Descending 22')
 displacement_data_nysa_ml['pid'] = displacement_data_nysa_ml['pid'].astype(str).str.strip() 
 all_data_nysa_ml = pd.merge(displacement_data_nysa_ml, geo_data_nysa_ml, on='pid', how='left')
 
-displacement_data_otm_dense = load_displacement_data('final_otm.csv', 
-                                                      'Descending 22')
-displacement_data_otm_dense['pid'] = displacement_data_otm_dense['pid'].astype(str).str.strip() 
-all_data_otm_dense = pd.merge(displacement_data_otm_dense, geo_data_otm_dense, on='pid', how='left')
-
 displacement_data_otm_ml = load_displacement_data('final_otm.csv', 
                                                       'Descending 22')
 displacement_data_otm_ml['pid'] = displacement_data_otm_ml['pid'].astype(str).str.strip() 
 all_data_otm_ml = pd.merge(displacement_data_otm_ml, geo_data_otm_ml, on='pid', how='left')
-
-prediction_data_nysa_dense = pd.read_csv('predictions_nysa_dense.csv', delimiter=',')
-prediction_data_nysa_dense = prediction_data_nysa_dense.melt(var_name='pid', value_name='predicted_displacement')
-prediction_data_nysa_dense['label'] = 'DENSE Nysa Prediction Set'
-prediction_data_nysa_dense['step'] = prediction_data_nysa_dense.groupby('pid').cumcount()
 
 prediction_data_nysa_ml = pd.read_csv('predictions_nysa_ml.csv', delimiter=',')
 prediction_data_nysa_ml = prediction_data_nysa_ml.melt(var_name='pid', value_name='predicted_displacement')
 prediction_data_nysa_ml['label'] = 'ML Nysa Prediction Set'
 prediction_data_nysa_ml['step'] = prediction_data_nysa_ml.groupby('pid').cumcount()
 
-prediction_data_otm_dense = pd.read_csv('predictions_otm_dense.csv', delimiter=',')
-prediction_data_otm_dense = prediction_data_otm_dense.melt(var_name='pid', value_name='predicted_displacement')
-prediction_data_otm_dense['label'] = 'DENSE OTM Prediction Set'
-prediction_data_otm_dense['step'] = prediction_data_otm_dense.groupby('pid').cumcount()
-
 prediction_data_otm_ml = pd.read_csv('predictions_otm_ml.csv', delimiter=',')
 prediction_data_otm_ml = prediction_data_otm_ml.melt(var_name='pid', value_name='predicted_displacement')
 prediction_data_otm_ml['label'] = 'ML OTM Prediction Set'
 prediction_data_otm_ml['step'] = prediction_data_otm_ml.groupby('pid').cumcount()
-
-anomaly_data_nysa_95_dense = load_anomaly_data('anomaly_nysa_dense_95.csv', 'Anomaly Set 1 DENSE (95%)')
-anomaly_data_nysa_95_dense = anomaly_data_nysa_95_dense.groupby('pid').head(60)
-
-anomaly_data_nysa_99_dense = load_anomaly_data('anomaly_nysa_dense_99.csv', 'Anomaly Set 1 DENSE (99%)')
-anomaly_data_nysa_99_dense = anomaly_data_nysa_99_dense.groupby('pid').head(60)
 
 anomaly_data_nysa_95_ml = load_anomaly_data('anomaly_nysa_ml_95.csv', 'Anomaly Set 1 ML (95%)')
 anomaly_data_nysa_95_ml = anomaly_data_nysa_95_ml.groupby('pid').head(60)
@@ -96,20 +65,11 @@ anomaly_data_nysa_95_ml = anomaly_data_nysa_95_ml.groupby('pid').head(60)
 anomaly_data_nysa_99_ml = load_anomaly_data('anomaly_nysa_ml_99.csv', 'Anomaly Set 1 ML (99%)')
 anomaly_data_nysa_99_ml = anomaly_data_nysa_99_ml.groupby('pid').head(60)
 
-anomaly_data_otm_95_dense = load_anomaly_data('anomaly_otm_dense_95.csv', 'Anomaly Set 2 DENSE (95%)')
-anomaly_data_otm_95_dense = anomaly_data_otm_95_dense.groupby('pid').head(60)
+anomaly_data_otm_95_ml = load_anomaly_data('anomaly_otm_ml_95.csv', 'Anomaly Set 1 ML (95%)')
+anomaly_data_otm_95_ml = anomaly_data_nysa_95_ml.groupby('pid').head(60)
 
-anomaly_data_otm_99_dense = load_anomaly_data('anomaly_otm_dense_99.csv', 'Anomaly Set 2 DENSE (99%)')
-anomaly_data_otm_99_dense = anomaly_data_otm_99_dense.groupby('pid').head(60)
-
-all_data_nysa_dense.sort_values(by=['pid', 'timestamp'], inplace=True)
-all_data_nysa_dense['displacement_diff'] = all_data_nysa_dense.groupby('pid')['displacement'].diff().round(1)
-all_data_nysa_dense['time_diff'] = all_data_nysa_dense.groupby('pid')['timestamp'].diff().dt.days.round(1)
-all_data_nysa_dense['displacement_speed'] = ((all_data_nysa_dense['displacement_diff'] / all_data_nysa_dense['time_diff']) * 365).round(1)
-
-mean_velocity_data_nysa_dense = all_data_nysa_dense.groupby('pid')['displacement_speed'].mean().round(1).reset_index()
-mean_velocity_data_nysa_dense.rename(columns={'displacement_speed': 'mean_velocity'}, inplace=True)
-all_data_nysa_dense = pd.merge(all_data_nysa_dense, mean_velocity_data_nysa_dense, on='pid', how='left')
+anomaly_data_otm_99_ml = load_anomaly_data('anomaly_otm_ml_99.csv', 'Anomaly Set 1 ML (99%)')
+anomaly_data_otm_99_ml = anomaly_data_nysa_99_ml.groupby('pid').head(60)
 
 all_data_nysa_ml.sort_values(by=['pid', 'timestamp'], inplace=True)
 all_data_nysa_ml['displacement_diff'] = all_data_nysa_ml.groupby('pid')['displacement'].diff().round(1)
@@ -119,15 +79,6 @@ all_data_nysa_ml['displacement_speed'] = ((all_data_nysa_ml['displacement_diff']
 mean_velocity_data_nysa_ml = all_data_nysa_ml.groupby('pid')['displacement_speed'].mean().round(1).reset_index()
 mean_velocity_data_nysa_ml.rename(columns={'displacement_speed': 'mean_velocity'}, inplace=True)
 all_data_nysa_ml = pd.merge(all_data_nysa_ml, mean_velocity_data_nysa_ml, on='pid', how='left')
-
-all_data_otm_dense.sort_values(by=['pid', 'timestamp'], inplace=True)
-all_data_otm_dense['displacement_diff'] = all_data_otm_dense.groupby('pid')['displacement'].diff().round(1)
-all_data_otm_dense['time_diff'] = all_data_otm_dense.groupby('pid')['timestamp'].diff().dt.days.round(1)
-all_data_otm_dense['displacement_speed'] = ((all_data_otm_dense['displacement_diff'] / all_data_otm_dense['time_diff']) * 365).round(1)
-
-mean_velocity_data_otm_dense = all_data_otm_dense.groupby('pid')['displacement_speed'].mean().round(1).reset_index()
-mean_velocity_data_otm_dense.rename(columns={'displacement_speed': 'mean_velocity'}, inplace=True)
-all_data_otm_dense = pd.merge(all_data_otm_dense, mean_velocity_data_otm_dense, on='pid', how='left')
 
 all_data_otm_ml.sort_values(by=['pid', 'timestamp'], inplace=True)
 all_data_otm_ml['displacement_diff'] = all_data_otm_ml.groupby('pid')['displacement'].diff().round(1)
@@ -154,28 +105,24 @@ def compute_prefix_sums(data):
     return pivot
 
 
-nysa_dense_prefix = compute_prefix_sums(prediction_data_nysa_dense)
 nysa_ml_prefix = compute_prefix_sums(prediction_data_nysa_ml)
-otm_dense_prefix = compute_prefix_sums(prediction_data_otm_dense)
 otm_ml_prefix = compute_prefix_sums(prediction_data_otm_ml)
 
 prefix_data = {
-    ('nysa', 'dense'): nysa_dense_prefix,
     ('nysa', 'ml'): nysa_ml_prefix,
-    ('otmuchow', 'dense'): otm_dense_prefix,
     ('otmuchow', 'ml'): otm_ml_prefix,
 }
 
-MAX_NYSA = nysa_dense_prefix.columns.max()
-MAX_OTMUCHOW = otm_dense_prefix.columns.max()
+MAX_NYSA = nysa_ml_prefix.columns.max()
+MAX_OTMUCHOW = otm_ml_prefix.columns.max()
 
 def add_obs_step(df):
     df = df.sort_values(by=['pid', 'timestamp'])
     df['obs_step'] = df.groupby('pid').cumcount() + 1
     return df
 
-all_data_nysa_dense = add_obs_step(all_data_nysa_dense)
-all_data_otm_dense = add_obs_step(all_data_otm_dense)
+all_data_nysa_ml = add_obs_step(all_data_nysa_ml)
+all_data_otm_ml = add_obs_step(all_data_otm_ml)
 
 def compute_prefix_sums_actual(df):
     pivot = df.pivot(index='pid', columns='obs_step', values='displacement').fillna(0).round(1)
@@ -185,16 +132,16 @@ def compute_prefix_sums_actual(df):
         pivot[col] = (pivot[col] + pivot[col-1]).round(1)
     return pivot
 
-actual_nysa_dense_prefix = compute_prefix_sums_actual(all_data_nysa_dense)
-actual_otm_dense_prefix = compute_prefix_sums_actual(all_data_otm_dense)
+actual_nysa_ml_prefix = compute_prefix_sums_actual(all_data_nysa_ml)
+actual_otm_ml_prefix = compute_prefix_sums_actual(all_data_otm_ml)
 
 actual_prefix_data = {
-    'nysa': actual_nysa_dense_prefix,
-    'otmuchow': actual_otm_dense_prefix,
+    'nysa': actual_nysa_ml_prefix,
+    'otmuchow': actual_otm_ml_prefix,
 }
 
-MAX_ACTUAL_NYSA = actual_nysa_dense_prefix.columns.max()
-MAX_ACTUAL_OTMUCHOW = actual_otm_dense_prefix.columns.max()
+MAX_ACTUAL_NYSA = actual_nysa_ml_prefix.columns.max()
+MAX_ACTUAL_OTMUCHOW = actual_otm_ml_prefix.columns.max()
 
 orbit_geometry_info = {
     'Descending 22': {
@@ -408,10 +355,9 @@ app.layout = html.Div([
             dcc.Dropdown(
                 id='prediction-method-dropdown',
                 options=[
-                    {'label': 'Autoencoder Dense', 'value': 'dense'},
                     {'label': 'ML', 'value': 'ml'}
                 ],
-                value='dense',
+                value='ml',
                 clearable=False,
                 style={'width': '100%'}
             )
@@ -446,8 +392,8 @@ app.layout = html.Div([
                 html.Label("Select Date Range", style={'font-size': '16px'}),
                 dcc.DatePickerRange(
                     id='date-range-picker',
-                    start_date=all_data_nysa_dense['timestamp'].min(),
-                    end_date=all_data_nysa_dense['timestamp'].max(),
+                    start_date=all_data_nysa_ml['timestamp'].min(),
+                    end_date=all_data_nysa_ml['timestamp'].max(),
                     display_format='YYYY-MM-DD',
                     style={
                         'height': '5px', 'width': '300px', 'font-family': 'Arial',
@@ -561,9 +507,9 @@ def display_selected_dates(range_value, selected_area):
     start_val, end_val = range_value
 
     data_for_area = {
-        'nysa': all_data_nysa_dense,
-        'otmuchow': all_data_otm_dense,
-    }.get(selected_area, all_data_nysa_dense)
+        'nysa': all_data_nysa_ml,
+        'otmuchow': all_data_otm_ml,
+    }.get(selected_area, all_data_nysa_ml)
 
     timestamps_df = (
         data_for_area
@@ -641,9 +587,9 @@ def update_slider_max(selected_area, color_mode, prediction_method):
         max_val = 60  
         
     data_for_area = {
-        'nysa': all_data_nysa_dense,
-        'otmuchow': all_data_otm_dense,
-    }.get(selected_area, all_data_nysa_dense)
+        'nysa': all_data_nysa_ml,
+        'otmuchow': all_data_otm_ml,
+    }.get(selected_area, all_data_nysa_ml)
 
     timestamps_df = data_for_area.drop_duplicates(subset='obs_step')[['obs_step', 'timestamp']].sort_values('obs_step')
 
@@ -687,12 +633,12 @@ def update_map(map_style,color_mode,orbit_filter,selected_area,pred_range,predic
                color_scale_selected,range_choice,custom_min,custom_max):
     
     if selected_area == 'otmuchow':
-        data = all_data_otm_dense.drop_duplicates(subset=['pid'])
+        data = all_data_otm_ml.drop_duplicates(subset=['pid'])
         center_coords = {'lat': data['latitude'].mean(), 'lon': data['longitude'].mean()}
         zoom_level = 12
         orbit_filter = ['Descending 22']
     elif selected_area == 'nysa':
-        data = all_data_nysa_dense.drop_duplicates(subset=['pid'])
+        data = all_data_nysa_ml.drop_duplicates(subset=['pid'])
         center_coords = {'lat': data['latitude'].mean(), 'lon': data['longitude'].mean()}
         zoom_level = 12
         orbit_filter = ['Descending 22']
@@ -713,7 +659,7 @@ def update_map(map_style,color_mode,orbit_filter,selected_area,pred_range,predic
         elif selected_area == 'nysa':
             max_steps = MAX_NYSA
 
-        pred_key = (selected_area, prediction_method if selected_area in ['nysa', 'raciborz', 'otmuchow'] else 'dense')
+        pred_key = (selected_area, prediction_method if selected_area in ['nysa', 'raciborz', 'otmuchow'] else 'ml')
         prefix_pivot = prefix_data[pred_key]
 
         end_val = min(end_val, max_steps)
@@ -798,9 +744,9 @@ def update_map(map_style,color_mode,orbit_filter,selected_area,pred_range,predic
 
     elif color_mode == 'anomaly_type':
         if selected_area == 'otmuchow':
-            merged_data = filtered_data.merge(anomaly_data_otm_99_dense[['pid','is_anomaly']], on='pid', how='left')
+            merged_data = filtered_data.merge(anomaly_data_otm_99_ml[['pid','is_anomaly']], on='pid', how='left')
         elif selected_area == 'nysa':
-            merged_data = filtered_data.merge(anomaly_data_nysa_99_dense[['pid','is_anomaly']], on='pid', how='left')
+            merged_data = filtered_data.merge(anomaly_data_nysa_99_ml[['pid','is_anomaly']], on='pid', how='left')
 
         merged_data['is_anomaly'] = merged_data['is_anomaly'].fillna(False).astype(bool)
         merged_data['consecutive_anomalies'] = (
@@ -953,11 +899,11 @@ def display_distance(selected_points, distance_calc_enabled):
 )
 def update_date_picker(selected_area):
     if selected_area == 'otmuchow':
-        start_date = all_data_otm_dense['timestamp'].min()
-        end_date = all_data_otm_dense['timestamp'].max()
+        start_date = all_data_otm_ml['timestamp'].min()
+        end_date = all_data_otm_ml['timestamp'].max()
     elif selected_area == 'nysa':
-        start_date = all_data_nysa_dense['timestamp'].min()
-        end_date = all_data_nysa_dense['timestamp'].max()
+        start_date = all_data_nysa_ml['timestamp'].min()
+        end_date = all_data_nysa_ml['timestamp'].max()
 
     return start_date, end_date, start_date, end_date
 
@@ -983,43 +929,13 @@ def display_displacement(clickData, start_date, end_date, y_min, y_max, selected
     end_date = pd.to_datetime(end_date)
     
     if selected_area == 'otmuchow':
-        if prediction_method == 'dense':
-            full_data = all_data_otm_dense[all_data_otm_dense['pid'] == point_id].copy()
-            anomaly_data_95 = anomaly_data_otm_95_dense
-            anomaly_data_99 = anomaly_data_otm_99_dense
-            last_n_data = full_data.tail(60)
-        elif prediction_method == 'lstm':
-            full_data = all_data_otm_lstm[all_data_otm_lstm['pid'] == point_id].copy()
-            anomaly_data_95 = anomaly_data_otm_95_lstm
-            anomaly_data_99 = anomaly_data_otm_99_lstm
-            last_n_data = full_data.tail(60)
-        elif prediction_method == 'conv':
-            full_data = all_data_otm_conv[all_data_otm_conv['pid'] == point_id].copy()
-            anomaly_data_95 = anomaly_data_otm_95_conv
-            anomaly_data_99 = anomaly_data_otm_99_conv
-            last_n_data = full_data.tail(60)
-        else:
+        if prediction_method == 'ml':
             full_data = all_data_otm_ml[all_data_otm_ml['pid'] == point_id].copy()
             anomaly_data_95 = anomaly_data_otm_95_ml
             anomaly_data_99 = anomaly_data_otm_99_ml
             last_n_data = full_data.tail(60)
     elif selected_area == 'nysa':
-        if prediction_method == 'dense':
-            full_data = all_data_nysa_dense[all_data_nysa_dense['pid'] == point_id].copy()
-            anomaly_data_95 = anomaly_data_nysa_95_dense
-            anomaly_data_99 = anomaly_data_nysa_99_dense
-            last_n_data = full_data.tail(60)
-        elif prediction_method == 'lstm':
-            full_data = all_data_nysa_lstm[all_data_nysa_lstm['pid'] == point_id].copy()
-            anomaly_data_95 = anomaly_data_nysa_95_lstm
-            anomaly_data_99 = anomaly_data_nysa_99_lstm
-            last_n_data = full_data.tail(60)
-        elif prediction_method == 'conv':
-            full_data = all_data_nysa_conv[all_data_nysa_conv['pid'] == point_id].copy()
-            anomaly_data_95 = anomaly_data_nysa_95_conv
-            anomaly_data_99 = anomaly_data_nysa_99_conv
-            last_n_data = full_data.tail(60)
-        else:
+        if prediction_method == 'ml':
             full_data = all_data_nysa_ml[all_data_nysa_ml['pid'] == point_id].copy()
             anomaly_data_95 = anomaly_data_nysa_95_ml
             anomaly_data_99 = anomaly_data_nysa_99_ml
